@@ -1,0 +1,50 @@
+s3_bucket: sqsdata
+s3_key_prefix: lambda/${task_name}/${task_id}/${func_id}_vpc
+s3_obj_tags: TaskName=${task_name}
+sqs_queue_dead_letter:
+  QueueName: ${task_name}_${task_id}_${func_id}_vpc_dl
+  Attributes:
+    DelaySeconds: "0"
+    MaximumMessageSize: "262144"
+    MessageRetentionPeriod: "345600"
+    ReceiveMessageWaitTimeSeconds: "3"
+    VisibilityTimeout: "500"
+sqs_queue:
+  QueueName: ${task_name}_${task_id}_${func_id}_vpc
+  Attributes:
+    DelaySeconds: "0"
+    MaximumMessageSize: "262144"
+    MessageRetentionPeriod: "345600"
+    ReceiveMessageWaitTimeSeconds: "3"
+    VisibilityTimeout: "500"
+    RedrivePolicy: '{"deadLetterTargetArn":"arn:aws:sqs:${aws_region}:${aws_account}:${task_name}_${task_id}_${func_id}_vpc_dl","maxReceiveCount":${msg_max_retry}}'
+sqs_queue_tags:
+  TaskName: ${task_name}
+lambda_func:
+  FunctionName: ${task_name}_${func_id}_vpc
+  Runtime: python3.6
+  Role: arn:aws:iam::182564333339:role/lambda_exec
+  Handler: lambda_function.${base_name}_handler
+  Code:
+    S3Bucket: cloudspider
+    S3Key: py-lambda-package.zip
+  Description: ${base_name} with vpc for ${task_name}.${func_id}, concurrent ${concurrent}
+  Timeout: 300
+  MemorySize: ${runtime_memory}
+  Publish: False
+  VpcConfig:
+    SubnetIds:
+      - subnet-07362e9a770ddd681
+    SecurityGroupIds:
+      - sg-0250e0f2de2b8f76e
+  Tags:
+    TaskName: ${task_name}
+lambda_func_concurrency:
+  FunctionName: ${task_name}_${func_id}_vpc
+  ReservedConcurrentExecutions: ${concurrent}
+event_mapping:
+  EventSourceArn: arn:aws:sqs:${aws_region}:${aws_account}:${task_name}_${task_id}_${func_id}_vpc
+  FunctionName: ${task_name}_${func_id}_vpc
+  Enabled: ${event_enabled}
+  BatchSize: ${event_batch}
+
