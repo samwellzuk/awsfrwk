@@ -22,7 +22,7 @@ sqs_queue_tags:
   TaskName: ${task_name}
 lambda_func:
   FunctionName: ${task_name}_${func_id}_vpc
-  Runtime: python3.6
+  Runtime: python3.7
   Role: arn:aws:iam::182564333339:role/lambda_exec
   Handler: lambda_function.${base_name}_handler
   Code:
